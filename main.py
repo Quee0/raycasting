@@ -10,15 +10,19 @@ WHITE = (255,255,255)
 BLACK = (0,0,0)
 RED = (157, 2, 8)
 
-map_tile_size = 30
+map_tile_size = 52
+map_width = 8
+map_height = 8
 speed = 2
 
-level = [[1, 1, 1, 1, 1, 1],
-         [1, 0, 1, 1, 0, 1],
-         [1, 0, 1, 0, 0, 1],
-         [1, 0, 0, 0, 1, 1],
-         [1, 0, 0, 0, 0, 1],
-         [1, 1, 1, 1, 1, 1]]
+level = [[1, 1, 1, 1, 1, 1, 1, 1],
+         [1, 0, 1, 1, 0, 0, 0, 1],
+         [1, 0, 1, 0, 0, 0, 0, 1],
+         [1, 0, 0, 0, 0, 0, 1, 1],
+         [1, 0, 0, 0, 0, 0, 1, 1],
+         [1, 0, 1, 0, 0, 0, 1, 1],
+         [1, 0, 0, 0, 0, 0, 0, 1],
+         [1, 1, 1, 1, 1, 1, 1, 1]]
 
 class Player(pygame.sprite.Sprite):
 	def __init__(self,pos):
@@ -35,6 +39,14 @@ class Player(pygame.sprite.Sprite):
 		if keys[pygame.K_LEFT]: self.rect.x -= speed
 		elif keys[pygame.K_RIGHT]: self.rect.x += speed
 
+class Tile(pygame.sprite.Sprite):
+	def __init__(self,pos,color):
+		super().__init__()
+
+		self.image = pygame.Surface([map_tile_size, map_tile_size])
+		self.image.fill(color)
+		self.rect = self.image.get_rect(topleft = pos)
+
 def main():
 
 	screen = pygame.display.set_mode((width, height))
@@ -44,6 +56,11 @@ def main():
 	clock = pygame.time.Clock()
 
 
+	walls = pygame.sprite.Group()
+	for c_row, row in enumerate(level):
+		for c_col, col in enumerate(row):
+			if col == 1:
+				walls.add(Tile((c_col*map_tile_size, c_row *map_tile_size),RED))
 
 	player = pygame.sprite.GroupSingle()
 	player.add(Player((50,50)))
@@ -58,14 +75,10 @@ def main():
 
 
 		player.sprite.move()
-		player.update()
 	
 		screen.fill(BLACK)
-
-		for c_row, row in enumerate(level):
-			for c_col, col in enumerate(row):
-				if col == 1: pygame.draw.rect(screen, RED, (c_col*30, c_row*30, 30, 30))
 		
+		walls.draw(screen)
 		player.draw(screen)
 		pygame.display.update()
 
