@@ -59,14 +59,17 @@ class Player(pygame.sprite.Sprite):
 			self.delta_y = math.sin(self.angle)*5
 
 		if self.angle > 2*math.pi: self.angle = 0
-		elif self.angle < 0: self.angle = 2*math.pi
+		if self.angle < 0: self.angle = 2*math.pi
 
 	def cast_rays(self,walls):
 		ray_angle = self.angle-60*0.0175
 		list_of_rays = []
 		for i in range(120):
 			ray_angle += (2*math.pi/360)
-
+		
+			#fix angle
+			if ray_angle > 2*math.pi: ray_angle -= 2*math.pi
+			if ray_angle < 0: ray_angle += 2*math.pi 
 			# --Check horisontal lines--
 			ray_x, ray_y = 0, 0
 			if ray_angle > math.pi: #Looking up
@@ -84,14 +87,14 @@ class Player(pygame.sprite.Sprite):
 
 			found = False
 			if ray_angle == 2*math.pi or ray_angle == math.pi or ray_angle == 0: 
-				ray_x, ray_y = 50000, 50000
+				ray_x, ray_y = 1000000000, 1000000000
 				found = True
 			
 			limiter = 0
 			while not found: # finding collisions
 				if limiter >= 10: break
 				for tile in walls:
-					if not tile.rect.colliderect(pygame.Rect((ray_x-1, ray_y-1),(2,2))):
+					if not tile.rect.colliderect(pygame.Rect((ray_x-2, ray_y-2),(4,4))):
 						pass
 					else: 
 						found = True
@@ -102,7 +105,7 @@ class Player(pygame.sprite.Sprite):
 					ray_x += x_offset
 				limiter += 1
 
-			ray_length = math.sqrt( (self.rect.centerx-ray_x)**2 + (self.rect.centery-ray_y)**2 )
+			ray_length = math.sqrt( (self.rect.centerx-ray_x)**2.0 + (self.rect.centery-ray_y)**2.0 )
 
 			#--Check Vertical lines--
 			ray2_x, ray2_y = 0, 0
@@ -119,8 +122,8 @@ class Player(pygame.sprite.Sprite):
 				y_offset2 = x_offset2*(math.tan(ray_angle))
 
 			found2 = False
-			if ray_angle == 1.5*math.pi or ray_angle == 0.5*math.pi:
-				ray2_x, ray2_y = 50000, 50000
+			if ray_angle == 1.5*math.pi or ray_angle == 0.5*math.pi or ray_angle == 0:
+				ray2_x, ray2_y = 1000000000, 1000000000
 				found2 = True
 
 			limiter2 = 0
@@ -128,7 +131,7 @@ class Player(pygame.sprite.Sprite):
 				if limiter2 >= 10:
 					break
 				for tile in walls:
-					if not tile.rect.colliderect(pygame.Rect((ray2_x-1, ray2_y-1), (2, 2))):
+					if not tile.rect.colliderect(pygame.Rect((ray2_x-2, ray2_y-2), (4, 4))):
 						pass
 					else:
 						found2 = True
@@ -139,7 +142,7 @@ class Player(pygame.sprite.Sprite):
 					ray2_x += x_offset2
 				limiter2 += 1
 
-			ray2_length = math.sqrt( (self.rect.centerx-ray2_x)**2 + (self.rect.centery-ray2_y)**2 )
+			ray2_length = math.sqrt( (self.rect.centerx-ray2_x)**2.0 + (self.rect.centery-ray2_y)**2.0 )
 
 			if ray_length < ray2_length: list_of_rays.append([ray_x, ray_y, ray_length])
 			if ray_length > ray2_length: list_of_rays.append([ray2_x, ray2_y, ray2_length])
@@ -189,7 +192,7 @@ def main():
 		player.draw(screen)
 		for ray_counter, ray in enumerate(rays):
 			pygame.draw.line(screen, (0, 0, 255), (player.sprite.rect.centerx, player.sprite.rect.centery), (ray[0], ray[1]), width=1)
-			line_height = (1/ray[2])*20000
+			line_height = (1/(ray[2]+0.0000001))*20000
 			pygame.draw.rect(screen, LIGHT_GREEN, pygame.Rect((ray_counter*4+500, line_height/2+50), (4,line_height)))
 		
 		pygame.draw.line(screen, GREEN, (player.sprite.rect.centerx, player.sprite.rect.centery), (player.sprite.rect.centerx + player.sprite.delta_x*5, player.sprite.rect.centery+player.sprite.delta_y*5), width=3)
