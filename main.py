@@ -10,6 +10,7 @@ WHITE = (255,255,255)
 BLACK = (0,0,0)
 RED = (157, 2, 8)
 GREEN = (128, 185, 24)
+LIGHT_GREEN = (217, 237, 146)
 YELLOW = (255, 255, 0)
 
 map_tile_size = 52
@@ -61,8 +62,10 @@ class Player(pygame.sprite.Sprite):
 		elif self.angle < 0: self.angle = 2*math.pi
 
 	def cast_rays(self,walls):
-		ray_angle = self.angle
-		for ray in range(1):
+		ray_angle = self.angle-60*0.0175
+		list_of_rays = []
+		for i in range(120):
+			ray_angle += (2*math.pi/360)
 
 			# --Check horisontal lines--
 			ray_x, ray_y = 0, 0
@@ -81,7 +84,7 @@ class Player(pygame.sprite.Sprite):
 
 			found = False
 			if ray_angle == 2*math.pi or ray_angle == math.pi or ray_angle == 0: 
-				ray_x, ray_y = self.rect.centerx, self.rect.centery
+				ray_x, ray_y = 50000, 50000
 				found = True
 			
 			limiter = 0
@@ -99,6 +102,8 @@ class Player(pygame.sprite.Sprite):
 					ray_x += x_offset
 				limiter += 1
 
+			ray_length = math.sqrt( (self.rect.centerx-ray_x)**2 + (self.rect.centery-ray_y)**2 )
+
 			#--Check Vertical lines--
 			ray2_x, ray2_y = 0, 0
 			if ray_angle > 0.5*math.pi and ray_angle < 1.5*math.pi:  # Looking left
@@ -115,7 +120,7 @@ class Player(pygame.sprite.Sprite):
 
 			found2 = False
 			if ray_angle == 1.5*math.pi or ray_angle == 0.5*math.pi:
-				ray2_x, ray2_y = self.rect.centerx, self.rect.centery
+				ray2_x, ray2_y = 50000, 50000
 				found2 = True
 
 			limiter2 = 0
@@ -134,8 +139,11 @@ class Player(pygame.sprite.Sprite):
 					ray2_x += x_offset2
 				limiter2 += 1
 
-			return [ray_x, ray_y, ray2_x, ray2_y]
+			ray2_length = math.sqrt( (self.rect.centerx-ray2_x)**2 + (self.rect.centery-ray2_y)**2 )
 
+			if ray_length < ray2_length: list_of_rays.append([ray_x, ray_y, ray_length])
+			if ray_length > ray2_length: list_of_rays.append([ray2_x, ray2_y, ray2_length])
+		return list_of_rays
 
 class Tile(pygame.sprite.Sprite):
 	def __init__(self,pos,color):
@@ -173,19 +181,19 @@ def main():
 
 
 		player.sprite.move()
-		ray_l = player.sprite.cast_rays(walls)
-		ray_x, ray_y, ray2_x, ray2_y = ray_l[0], ray_l[1], ray_l[2], ray_l[3]
+		rays = player.sprite.cast_rays(walls)
 
 		screen.fill(BLACK)
 		
 		walls.draw(screen)
 		player.draw(screen)
-		pygame.draw.line(screen, (0, 0, 255), (player.sprite.rect.centerx, player.sprite.rect.centery), (ray_x, ray_y), width=5)
-		pygame.draw.line(screen, YELLOW, (player.sprite.rect.centerx, player.sprite.rect.centery), (ray2_x, ray2_y), width=3)
+		for ray_counter, ray in enumerate(rays):
+			pygame.draw.line(screen, (0, 0, 255), (player.sprite.rect.centerx, player.sprite.rect.centery), (ray[0], ray[1]), width=1)
+			line_height = (1/ray[2])*20000
+			pygame.draw.rect(screen, LIGHT_GREEN, pygame.Rect((ray_counter*4+500, line_height/2+50), (4,line_height)))
+		
 		pygame.draw.line(screen, GREEN, (player.sprite.rect.centerx, player.sprite.rect.centery), (player.sprite.rect.centerx + player.sprite.delta_x*5, player.sprite.rect.centery+player.sprite.delta_y*5), width=3)
 
-		pygame.draw.circle(screen, WHITE, (ray_x,ray_y), 1)
-		pygame.draw.circle(screen, WHITE, (ray2_x, ray2_y), 1)
 		pygame.display.update()
 
 
