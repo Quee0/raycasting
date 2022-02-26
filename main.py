@@ -10,6 +10,7 @@ WHITE = (255,255,255)
 BLACK = (0,0,0)
 RED = (157, 2, 8)
 GREEN = (128, 185, 24)
+YELLOW = (255, 255, 0)
 
 map_tile_size = 52
 map_width = 8
@@ -24,7 +25,7 @@ level = [[1, 1, 1, 1, 1, 1, 1, 1],
          [1, 0, 0, 0, 0, 0, 0, 1],
          [1, 1, 1, 1, 1, 1, 1, 1]]
 
-ys_list = list(range(0, 52 * map_height, map_tile_size))
+cord_list = list(range(0, 52 * map_height, map_tile_size))
 
 class Player(pygame.sprite.Sprite):
 	def __init__(self,pos):
@@ -66,21 +67,19 @@ class Player(pygame.sprite.Sprite):
 			# --Check horisontal lines--
 			ray_x, ray_y = 0, 0
 			if ray_angle > math.pi: #Looking up
-				ray_y = min(ys_list, key=lambda x: abs(x-self.rect.centery+map_tile_size))
+				ray_y = min(cord_list, key=lambda x: abs(x-self.rect.centery+map_tile_size))
 				ray_x = self.rect.centerx - (1/math.tan(ray_angle-math.pi) * abs(ray_y-self.rect.centery))
 				y_offset = -map_tile_size
 				x_offset = y_offset*(1/math.tan(ray_angle))
 				
 
 			elif ray_angle < math.pi: #Looking down
-				ray_y = min(ys_list, key=lambda x: abs(x-self.rect.centery-map_tile_size))
+				ray_y = min(cord_list, key=lambda x: abs(x-self.rect.centery-map_tile_size))
 				ray_x = self.rect.centerx + (1/math.tan(ray_angle-math.pi) * abs(ray_y-self.rect.centery))
 				y_offset = map_tile_size
 				x_offset = y_offset*(1/(math.tan(ray_angle)+0.000001))
 
 			found = False
-
-			print(ray_angle)
 			if ray_angle == 2*math.pi or ray_angle == math.pi or ray_angle == 0: 
 				ray_x, ray_y = self.rect.centerx, self.rect.centery
 				found = True
@@ -100,7 +99,42 @@ class Player(pygame.sprite.Sprite):
 					ray_x += x_offset
 				limiter += 1
 
-			return [ray_x, ray_y]
+			#--Check Vertical lines--
+			ray2_x, ray2_y = 0, 0
+			if ray_angle > 0.5*math.pi and ray_angle < 1.5*math.pi:  # Looking left
+				ray2_x = min(cord_list, key=lambda x: abs(x-self.rect.centerx+map_tile_size))
+				ray2_y = self.rect.centery - (math.tan(ray_angle-math.pi) * abs(ray2_x-self.rect.centerx))
+				x_offset2 = -map_tile_size
+				y_offset2 = x_offset2*(math.tan(ray_angle))
+
+			elif (ray_angle > 0 and ray_angle < 0.5*math.pi) or (ray_angle > 1.5*math.pi and ray_angle < 2*math.pi):  # Looking right
+				ray2_x = min(cord_list, key=lambda x: abs(x-self.rect.centerx-map_tile_size))
+				ray2_y = self.rect.centery + (math.tan(ray_angle-math.pi) * abs(ray2_x-self.rect.centerx))
+				x_offset2 = map_tile_size
+				y_offset2 = x_offset2*(math.tan(ray_angle))
+
+			found2 = False
+			if ray_angle == 1.5*math.pi or ray_angle == 0.5*math.pi:
+				ray2_x, ray2_y = self.rect.centerx, self.rect.centery
+				found2 = True
+
+			limiter2 = 0
+			while not found2:  # finding collisions
+				if limiter2 >= 10:
+					break
+				for tile in walls:
+					if not tile.rect.colliderect(pygame.Rect((ray2_x-1, ray2_y-1), (2, 2))):
+						pass
+					else:
+						found2 = True
+						break
+
+				if not found2:
+					ray2_y += y_offset2
+					ray2_x += x_offset2
+				limiter2 += 1
+
+			return [ray_x, ray_y, ray2_x, ray2_y]
 
 
 class Tile(pygame.sprite.Sprite):
@@ -140,16 +174,18 @@ def main():
 
 		player.sprite.move()
 		ray_l = player.sprite.cast_rays(walls)
-		ray_x, ray_y = ray_l[0], ray_l[1]
+		ray_x, ray_y, ray2_x, ray2_y = ray_l[0], ray_l[1], ray_l[2], ray_l[3]
 
 		screen.fill(BLACK)
 		
 		walls.draw(screen)
 		player.draw(screen)
 		pygame.draw.line(screen, (0, 0, 255), (player.sprite.rect.centerx, player.sprite.rect.centery), (ray_x, ray_y), width=5)
+		pygame.draw.line(screen, YELLOW, (player.sprite.rect.centerx, player.sprite.rect.centery), (ray2_x, ray2_y), width=3)
 		pygame.draw.line(screen, GREEN, (player.sprite.rect.centerx, player.sprite.rect.centery), (player.sprite.rect.centerx + player.sprite.delta_x*5, player.sprite.rect.centery+player.sprite.delta_y*5), width=3)
 
 		pygame.draw.circle(screen, WHITE, (ray_x,ray_y), 1)
+		pygame.draw.circle(screen, WHITE, (ray2_x, ray2_y), 1)
 		pygame.display.update()
 
 
