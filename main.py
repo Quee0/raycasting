@@ -3,7 +3,7 @@ import math
 
 pygame.init()
 
-width, height = 960, 540
+width, height = 1024, 540
 FPS = 60
 
 WHITE = (255,255,255)
@@ -13,9 +13,10 @@ GREEN = (128, 185, 24)
 LIGHT_GREEN = (217, 237, 146)
 YELLOW = (255, 255, 0)
 
-map_tile_size = 52
+map_tile_size = 64
 map_width = 8
 map_height = 8
+shade = 1
 
 level = [[1, 1, 1, 1, 1, 1, 1, 1],
          [1, 0, 1, 1, 0, 0, 0, 1],
@@ -36,7 +37,7 @@ class Player(pygame.sprite.Sprite):
 		self.delta_x = 1
 		self.delta_y = 1
 
-		self.image = pygame.Surface([map_tile_size//3, map_tile_size//3])
+		self.image = pygame.Surface([map_tile_size//10, map_tile_size//10])
 		self.image.fill(WHITE)
 		self.rect = self.image.get_rect(center = pos)
 	
@@ -62,9 +63,9 @@ class Player(pygame.sprite.Sprite):
 		if self.angle < 0: self.angle = 2*math.pi
 
 	def cast_rays(self,walls):
-		ray_angle = self.angle-60*0.0175
+		ray_angle = self.angle-30*0.0175
 		list_of_rays = []
-		for i in range(120):
+		for i in range(60):
 			ray_angle += (2*math.pi/360)
 		
 			#fix angle
@@ -144,9 +145,20 @@ class Player(pygame.sprite.Sprite):
 
 			ray2_length = math.sqrt( (self.rect.centerx-ray2_x)**2.0 + (self.rect.centery-ray2_y)**2.0 )
 
-			if ray_length < ray2_length: list_of_rays.append([ray_x, ray_y, ray_length])
-			if ray_length > ray2_length: list_of_rays.append([ray2_x, ray2_y, ray2_length])
+			if ray_length < ray2_length: ray_b_x, ray_b_y, ray_b_length = ray_x, ray_y, ray_length
+			if ray_length > ray2_length: ray_b_x, ray_b_y, ray_b_length = ray2_x, ray2_y, ray2_length
+
+			ca = self.angle - ray_angle
+			if ca > 2*math.pi: ca -= 2*math.pi
+			if ca < 0: ca += 2*math.pi
+			ray_b_length = ray_b_length * math.cos(ca)
+			
+			list_of_rays.append([ray_b_x, ray_b_y, ray_b_length])
 		return list_of_rays
+	def collisions(self,objects):
+		for object in objects:
+			print(object)
+
 
 class Tile(pygame.sprite.Sprite):
 	def __init__(self,pos,color):
@@ -192,8 +204,10 @@ def main():
 		player.draw(screen)
 		for ray_counter, ray in enumerate(rays):
 			pygame.draw.line(screen, (0, 0, 255), (player.sprite.rect.centerx, player.sprite.rect.centery), (ray[0], ray[1]), width=1)
-			line_height = (1/(ray[2]+0.0000001))*20000
-			pygame.draw.rect(screen, LIGHT_GREEN, pygame.Rect((ray_counter*4+500, line_height/2+50), (4,line_height)))
+			line_height = (1/(ray[2]+0.0000001))*15000+100
+			shade = int((1/line_height)*50000)
+			if shade > 255: shade = 255
+			pygame.draw.rect(screen, (255-shade, 255-shade, 255-shade), pygame.Rect((ray_counter*8+512, line_height/2-300), (8, line_height+300)))
 		
 		pygame.draw.line(screen, GREEN, (player.sprite.rect.centerx, player.sprite.rect.centery), (player.sprite.rect.centerx + player.sprite.delta_x*5, player.sprite.rect.centery+player.sprite.delta_y*5), width=3)
 
