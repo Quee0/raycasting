@@ -17,6 +17,7 @@ map_tile_size = 64
 map_width = 8
 map_height = 8
 shade = 1
+shade_intensity = 50000
 
 level = [[1, 1, 1, 1, 1, 1, 1, 1],
          [1, 0, 1, 1, 0, 0, 0, 1],
@@ -27,7 +28,8 @@ level = [[1, 1, 1, 1, 1, 1, 1, 1],
          [1, 0, 0, 0, 0, 0, 0, 1],
          [1, 1, 1, 1, 1, 1, 1, 1]]
 
-cord_list = list(range(0, 52 * map_height, map_tile_size))
+cord_list_x = list(range(0, 64 * map_width, map_tile_size))
+cord_list_y = list(range(0, 64 * map_height, map_tile_size))
 
 class Player(pygame.sprite.Sprite):
 	def __init__(self,pos):
@@ -37,9 +39,12 @@ class Player(pygame.sprite.Sprite):
 		self.delta_x = 1
 		self.delta_y = 1
 
-		self.image = pygame.Surface([map_tile_size//10, map_tile_size//10])
+		self.image = pygame.Surface([map_tile_size//3, map_tile_size//3])
 		self.image.fill(WHITE)
 		self.rect = self.image.get_rect(center = pos)
+
+		self.last_x = self.rect.x
+		self.last_y = self.rect.y
 	
 	def move(self):
 		keys = pygame.key.get_pressed()
@@ -50,14 +55,14 @@ class Player(pygame.sprite.Sprite):
 			self.rect.x -= self.delta_x
 			self.rect.y -= self.delta_y
 		if keys[pygame.K_LEFT]: 
-			self.angle -= math.pi/30
-			self.delta_x = math.cos(self.angle)*5
-			self.delta_y = math.sin(self.angle)*5
+			self.angle -= math.pi/70
+			self.delta_x = math.cos(self.angle)*3
+			self.delta_y = math.sin(self.angle)*3
 			
 		elif keys[pygame.K_RIGHT]: 
-			self.angle += math.pi/30
-			self.delta_x = math.cos(self.angle)*5
-			self.delta_y = math.sin(self.angle)*5
+			self.angle += math.pi/70
+			self.delta_x = math.cos(self.angle)*3
+			self.delta_y = math.sin(self.angle)*3
 
 		if self.angle > 2*math.pi: self.angle = 0
 		if self.angle < 0: self.angle = 2*math.pi
@@ -74,14 +79,14 @@ class Player(pygame.sprite.Sprite):
 			# --Check horisontal lines--
 			ray_x, ray_y = 0, 0
 			if ray_angle > math.pi: #Looking up
-				ray_y = min(cord_list, key=lambda x: abs(x-self.rect.centery+map_tile_size))
+				ray_y = min(cord_list_y, key=lambda x: abs(x-self.rect.centery+30))
 				ray_x = self.rect.centerx - (1/math.tan(ray_angle-math.pi) * abs(ray_y-self.rect.centery))
 				y_offset = -map_tile_size
 				x_offset = y_offset*(1/math.tan(ray_angle))
 				
 
 			elif ray_angle < math.pi: #Looking down
-				ray_y = min(cord_list, key=lambda x: abs(x-self.rect.centery-map_tile_size))
+				ray_y = min(cord_list_y, key=lambda x: abs(x-self.rect.centery-30))
 				ray_x = self.rect.centerx + (1/math.tan(ray_angle-math.pi) * abs(ray_y-self.rect.centery))
 				y_offset = map_tile_size
 				x_offset = y_offset*(1/(math.tan(ray_angle)+0.000001))
@@ -106,18 +111,18 @@ class Player(pygame.sprite.Sprite):
 					ray_x += x_offset
 				limiter += 1
 
-			ray_length = math.sqrt( (self.rect.centerx-ray_x)**2.0 + (self.rect.centery-ray_y)**2.0 )
+			ray_length = math.sqrt( abs(self.rect.centerx-ray_x)**2.0 + abs(self.rect.centery-ray_y)**2.0 )
 
 			#--Check Vertical lines--
 			ray2_x, ray2_y = 0, 0
 			if ray_angle > 0.5*math.pi and ray_angle < 1.5*math.pi:  # Looking left
-				ray2_x = min(cord_list, key=lambda x: abs(x-self.rect.centerx+map_tile_size))
+				ray2_x = min(cord_list_x, key=lambda x: abs(x-self.rect.centerx+30))
 				ray2_y = self.rect.centery - (math.tan(ray_angle-math.pi) * abs(ray2_x-self.rect.centerx))
 				x_offset2 = -map_tile_size
 				y_offset2 = x_offset2*(math.tan(ray_angle))
 
 			elif (ray_angle > 0 and ray_angle < 0.5*math.pi) or (ray_angle > 1.5*math.pi and ray_angle < 2*math.pi):  # Looking right
-				ray2_x = min(cord_list, key=lambda x: abs(x-self.rect.centerx-map_tile_size))
+				ray2_x = min(cord_list_x, key=lambda x: abs(x-self.rect.centerx-30))
 				ray2_y = self.rect.centery + (math.tan(ray_angle-math.pi) * abs(ray2_x-self.rect.centerx))
 				x_offset2 = map_tile_size
 				y_offset2 = x_offset2*(math.tan(ray_angle))
@@ -143,7 +148,7 @@ class Player(pygame.sprite.Sprite):
 					ray2_x += x_offset2
 				limiter2 += 1
 
-			ray2_length = math.sqrt( (self.rect.centerx-ray2_x)**2.0 + (self.rect.centery-ray2_y)**2.0 )
+			ray2_length = math.sqrt( abs(self.rect.centerx-ray2_x)**2.0 + abs(self.rect.centery-ray2_y)**2.0 )
 
 			if ray_length < ray2_length: ray_b_x, ray_b_y, ray_b_length = ray_x, ray_y, ray_length
 			if ray_length > ray2_length: ray_b_x, ray_b_y, ray_b_length = ray2_x, ray2_y, ray2_length
@@ -153,11 +158,17 @@ class Player(pygame.sprite.Sprite):
 			if ca < 0: ca += 2*math.pi
 			ray_b_length = ray_b_length * math.cos(ca)
 			
-			list_of_rays.append([ray_b_x, ray_b_y, ray_b_length])
+			list_of_rays.append([ray_b_x, ray_b_y, ray_b_length, ray2_x, ray2_y, ray_x, ray_y])
 		return list_of_rays
+
 	def collisions(self,objects):
 		for object in objects:
-			print(object)
+			if object.rect.colliderect(pygame.Rect(self.rect.topleft[0], self.rect.topleft[1], self.image.get_width(), 1)) or object.rect.colliderect(pygame.Rect(self.rect.bottomleft[0], self.rect.bottomleft[1], self.image.get_width(), 1)):
+				self.rect.y = self.last_y
+			if object.rect.colliderect(pygame.Rect(self.rect.topleft[0], self.rect.topleft[1], 1, self.image.get_height())) or object.rect.colliderect(pygame.Rect(self.rect.topright[0], self.rect.topright[1], 1, self.image.get_height())):
+				self.rect.x = self.last_x
+		self.last_x = self.rect.x
+		self.last_y = self.rect.y
 
 
 class Tile(pygame.sprite.Sprite):
@@ -196,6 +207,7 @@ def main():
 
 
 		player.sprite.move()
+		player.sprite.collisions(walls)
 		rays = player.sprite.cast_rays(walls)
 
 		screen.fill(BLACK)
@@ -205,9 +217,9 @@ def main():
 		for ray_counter, ray in enumerate(rays):
 			pygame.draw.line(screen, (0, 0, 255), (player.sprite.rect.centerx, player.sprite.rect.centery), (ray[0], ray[1]), width=1)
 			line_height = (1/(ray[2]+0.0000001))*15000+100
-			shade = int((1/line_height)*50000)
+			shade = int((1/line_height)*shade_intensity)
 			if shade > 255: shade = 255
-			pygame.draw.rect(screen, (255-shade, 255-shade, 255-shade), pygame.Rect((ray_counter*8+512, line_height/2-300), (8, line_height+300)))
+			pygame.draw.rect(screen, (255-shade, 255-shade, 255-shade), pygame.Rect((ray_counter*8+512, line_height/2-500), (8, line_height+500)))
 		
 		pygame.draw.line(screen, GREEN, (player.sprite.rect.centerx, player.sprite.rect.centery), (player.sprite.rect.centerx + player.sprite.delta_x*5, player.sprite.rect.centery+player.sprite.delta_y*5), width=3)
 
