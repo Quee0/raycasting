@@ -47,23 +47,24 @@ class Player(pygame.sprite.Sprite):
 		self.last_y = self.rect.y
 	
 	def move(self):
+		queue_x, queue_y = 0, 0
 		keys = pygame.key.get_pressed()
 		if keys[pygame.K_w]:
-			self.rect.x += self.delta_x
-			self.rect.y += self.delta_y
+			queue_x += self.delta_x
+			queue_y += self.delta_y
 		elif keys[pygame.K_s]: 
 			self.rect.x -= self.delta_x
-			self.rect.y -= self.delta_y
+			queue_y -= self.delta_y
 		# P_range = math.sqrt(self.delta_x**2 + self.delta_y**2) ALWAYS 3
 		P_range = 3
 		self.cos_range = P_range * math.cos(self.angle-math.pi/2)
 		self.sin_range = P_range * math.sin(self.angle-math.pi/2)
 		if keys[pygame.K_a]:
-			self.rect.x += self.cos_range
-			self.rect.y += self.sin_range
+			queue_x += self.cos_range
+			queue_y += self.sin_range
 		if keys[pygame.K_d]:
-			self.rect.x -= self.cos_range
-			self.rect.y -= self.sin_range
+			queue_x -= self.cos_range
+			queue_y -= self.sin_range
 		if keys[pygame.K_LEFT]:
 			self.angle -= math.pi/60
 			self.delta_x = math.cos(self.angle)*3
@@ -76,6 +77,14 @@ class Player(pygame.sprite.Sprite):
 
 		if self.angle > 2*math.pi: self.angle = 0
 		if self.angle < 0: self.angle = 2*math.pi
+
+		if queue_x > 2: queue_x = 2
+		elif queue_x < -2: queue_x = -2 
+		if queue_y > 2: queue_y = 2
+		elif queue_y < -2: queue_y = -2 
+		self.rect.x += queue_x
+		self.rect.y += queue_y
+
 
 	def cast_rays(self,walls):
 		ray_angle = self.angle-30*0.0175
