@@ -54,6 +54,16 @@ class Player(pygame.sprite.Sprite):
 		elif keys[pygame.K_s]: 
 			self.rect.x -= self.delta_x
 			self.rect.y -= self.delta_y
+		# P_range = math.sqrt(self.delta_x**2 + self.delta_y**2) ALWAYS 3
+		P_range = 3
+		self.cos_range = P_range * math.cos(self.angle-math.pi/2)
+		self.sin_range = P_range * math.sin(self.angle-math.pi/2)
+		if keys[pygame.K_a]:
+			self.rect.x += self.cos_range
+			self.rect.y += self.sin_range
+		if keys[pygame.K_d]:
+			self.rect.x -= self.cos_range
+			self.rect.y -= self.sin_range
 		if keys[pygame.K_LEFT]:
 			self.angle -= math.pi/60
 			self.delta_x = math.cos(self.angle)*3
@@ -223,7 +233,7 @@ def main():
 			pygame.draw.rect(screen, (255-shade, 255-shade, 255-shade), pygame.Rect((ray_counter*8+512, line_height/2-500), (8, line_height+500)))
 		
 		pygame.draw.line(screen, GREEN, (player.sprite.rect.centerx, player.sprite.rect.centery), (player.sprite.rect.centerx + player.sprite.delta_x*5, player.sprite.rect.centery+player.sprite.delta_y*5), width=3)
-
+		pygame.draw.rect(screen, GREEN, pygame.Rect(player.sprite.cos_range-2+player.sprite.rect.centerx, player.sprite.sin_range-2+player.sprite.rect.centery, 4,4))
 		pygame.display.update()
 
 
