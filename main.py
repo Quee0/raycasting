@@ -17,7 +17,7 @@ map_tile_size = 64
 map_width = 8
 map_height = 8
 shade = 1
-shade_intensity = 50000
+shade_intensity = 25000
 
 level = [[1, 1, 1, 1, 1, 1, 1, 1],
          [1, 0, 1, 1, 0, 0, 0, 1],
@@ -48,19 +48,19 @@ class Player(pygame.sprite.Sprite):
 	
 	def move(self):
 		keys = pygame.key.get_pressed()
-		if keys[pygame.K_UP]: 
+		if keys[pygame.K_w]:
 			self.rect.x += self.delta_x
 			self.rect.y += self.delta_y
-		elif keys[pygame.K_DOWN]: 
+		elif keys[pygame.K_s]: 
 			self.rect.x -= self.delta_x
 			self.rect.y -= self.delta_y
-		if keys[pygame.K_LEFT]: 
-			self.angle -= math.pi/70
+		if keys[pygame.K_LEFT]:
+			self.angle -= math.pi/60
 			self.delta_x = math.cos(self.angle)*3
 			self.delta_y = math.sin(self.angle)*3
 			
-		elif keys[pygame.K_RIGHT]: 
-			self.angle += math.pi/70
+		elif keys[pygame.K_RIGHT]:
+			self.angle += math.pi/60
 			self.delta_x = math.cos(self.angle)*3
 			self.delta_y = math.sin(self.angle)*3
 
@@ -195,7 +195,7 @@ def main():
 				walls.add(Tile((c_col*map_tile_size, c_row *map_tile_size),RED))
 
 	player = pygame.sprite.GroupSingle()
-	player.add(Player((200,200)))
+	player.add(Player((220,220)))
 
 
 
@@ -211,12 +211,13 @@ def main():
 		rays = player.sprite.cast_rays(walls)
 
 		screen.fill(BLACK)
-		
+
 		walls.draw(screen)
 		player.draw(screen)
 		for ray_counter, ray in enumerate(rays):
 			pygame.draw.line(screen, (0, 0, 255), (player.sprite.rect.centerx, player.sprite.rect.centery), (ray[0], ray[1]), width=1)
 			line_height = (1/(ray[2]+0.0000001))*15000+100
+			if ray[2] < 20: line_height = 1000
 			shade = int((1/line_height)*shade_intensity)
 			if shade > 255: shade = 255
 			pygame.draw.rect(screen, (255-shade, 255-shade, 255-shade), pygame.Rect((ray_counter*8+512, line_height/2-500), (8, line_height+500)))
